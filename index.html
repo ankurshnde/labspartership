@@ -11,7 +11,23 @@
     <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=Instrument+Serif:ital@0;1&family=Poppins:wght@400;500;600&display=swap" rel="stylesheet" />
     <link rel="stylesheet" href="styles.css" />
   </head>
-  <body>
+  <body class="is-locked">
+    <section class="access-gate" aria-labelledby="access-title">
+      <div class="access-gate__panel">
+        <img class="access-gate__icon" src="kumbh-labs-icon.svg" alt="Kumbh Labs" />
+        <p class="eyebrow">Stakeholder review</p>
+        <h1 id="access-title">Kumbh Labs<br /><em>Partnerships</em></h1>
+        <p class="access-gate__intro">This page is currently shared for stakeholder review. Enter the access key to continue.</p>
+        <form id="access-form" class="access-gate__form">
+          <label for="access-key">Access key</label>
+          <div class="access-gate__controls">
+            <input id="access-key" name="access-key" type="password" autocomplete="current-password" required autofocus />
+            <button type="submit">Enter <span>↗</span></button>
+          </div>
+          <p id="access-error" class="access-gate__error" role="alert"></p>
+        </form>
+      </div>
+    </section>
     <header class="site-header">
       <a class="brand" href="#top" aria-label="Kumbh Labs home">
         <img class="brand-icon" src="kumbh-labs-icon.svg" alt="" />
@@ -110,6 +126,36 @@
 
     <footer><a class="brand" href="#top"><img class="brand-icon" src="kumbh-labs-icon.svg" alt="" /><span>Kumbh Labs</span></a><p>Open research. Shared learning. Public benefit.</p><a href="#top">Back to top ↑</a></footer>
     <script>
+      const accessForm = document.querySelector('#access-form');
+      const accessKey = document.querySelector('#access-key');
+      const accessError = document.querySelector('#access-error');
+      const accessHash = 'c37b56a43e341ba695e96128a48983917d157368f4d44dac45e68ed76672ad11';
+
+      const unlock = () => {
+        document.body.classList.remove('is-locked');
+        sessionStorage.setItem('kumbh-labs-review-access', 'granted');
+      };
+
+      const hashValue = async (value) => {
+        const bytes = new TextEncoder().encode(value);
+        const digest = await crypto.subtle.digest('SHA-256', bytes);
+        return Array.from(new Uint8Array(digest)).map((byte) => byte.toString(16).padStart(2, '0')).join('');
+      };
+
+      if (sessionStorage.getItem('kumbh-labs-review-access') === 'granted') {
+        unlock();
+      }
+
+      accessForm.addEventListener('submit', async (event) => {
+        event.preventDefault();
+        if (await hashValue(accessKey.value) === accessHash) {
+          unlock();
+        } else {
+          accessError.textContent = 'That access key is not correct. Please try again.';
+          accessKey.select();
+        }
+      });
+
       const header = document.querySelector('.site-header');
       let lastScrollY = window.scrollY;
       let ticking = false;
